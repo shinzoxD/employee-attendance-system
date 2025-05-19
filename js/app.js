@@ -1,90 +1,73 @@
-(() => {
-  const form      = document.getElementById('attendanceForm');
-  const submitBtn = document.getElementById('submitBtn');
-  const toastEl   = document.getElementById('liveToast');
-  const toast     = new bootstrap.Toast(toastEl);
-  const tableBody = document.querySelector('#recordsTable tbody');
-  let   recordCnt = 0;
+/* ────────────────────────────────────────────────────
+   Front-end script that works both locally and on Netlify
+   ──────────────────────────────────────────────────── */
 
-  // ─── helpers ───────────────────────────────────────
-  const badgeClass = (status) => ({
-    Present: 'bg-success',
-    Absent : 'bg-danger',
-    Late   : 'bg-warning text-dark'
-  }[status] || 'bg-secondary');
+const API_ROOT =
+  window.location.hostname.includes('localhost')
+    ? 'http://127.0.0.1:5000'                       // dev
+    : 'https://jda-attendance-api.onrender.com';    // prod  ← already works
+                // prod  ← change me
 
-  const addRow = ({ id, employeeId, status, timestamp }) => {
-    recordCnt += 1;
-    const tr = document.createElement('tr');
-    tr.dataset.id = id;                       // store DB id on the row
+// ――― DOM refs
+const form      = document.getElementById('attendanceForm');
+const submitBtn = document.getElementById('submitBtn');
+const toast     = new bootstrap.Toast(document.getElementById('liveToast'));
+const tableBody = document.querySelector('#recordsTable tbody');
+let   rowNo     = 0;
 
-    tr.innerHTML = `
-      <th scope="row">${recordCnt}</th>
-      <td>${employeeId}</td>
-      <td><span class="badge ${badgeClass(status)}">${status}</span></td>
-      <td>${new Date(timestamp).toLocaleString('en-IN')}</td>
-      <td><button class="btn btn-sm btn-outline-danger delete-btn">×</button></td>
-    `;
-    tableBody.prepend(tr);
-  };
+// ――― helpers
+const badge = (s) =>
+  ({ Present:'bg-success', Absent:'bg-danger', Late:'bg-warning text-dark' }[s]);
 
-  // ─── load existing records on page load ────────────
-  fetch('http://127.0.0.1:5000/attendance')
-    .then((r) => r.json())
-    .then((rows) => rows.reverse().forEach(addRow))
-    .catch((err) => console.error('Load error:', err));
+function addRow({ id, employeeId, status, timestamp }) {
+  rowNo++;
+  const tr = document.createElement('tr');
+  tr.dataset.id = id;
+  tr.innerHTML = `
+    <th scope="row">${rowNo}</th>
+    <td>${employeeId}</td>
+    <td><span class="badge ${badge(status)}">${status}</span></td>
+    <td>${new Date(timestamp).toLocaleString('en-IN')}</td>
+    <td class="text-end"><button class="btn btn-sm btn-outline-danger delete-btn">×</button></td>
+  `;
+  tableBody.prepend(tr);
+}
 
-  // ─── enable/disable submit button ──────────────────
-  form.addEventListener('input', () => {
-    submitBtn.disabled = !form.checkValidity();
-  });
+// ――― initial load
+fetch(`${API_ROOT}/attendance`)
+  .then(r => r.json())
+  .then(rows => rows.reverse().forEach(addRow))
+  .catch(console.error);
 
-  // ─── create new record ─────────────────────────────
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const employeeId = form.employeeId.value.trim();
-    const status     = form.status.value;
+// ――― live form validation
+form.addEventListener('input', () => (submitBtn.disabled = !form.checkValidity()));
 
-    fetch('http://127.0.0.1:5000/attendance', {
-      method : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body   : JSON.stringify({ employeeId, status })
+// ――― submit
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const [employeeId, status] = [form.employeeId.value.trim(), form.status.value];
+
+  fetch(`${API_ROOT}/attendance`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ employeeId, status })
+  })
+    .then(r => r.json())
+    .then(d => {
+      addRow({ ...d, employeeId, status, timestamp: new Date().toISOString() });
+      toast.show(); form.reset(); submitBtn.disabled = true;
     })
-      .then((r) => r.json())
-      .then((data) => {
-        addRow({
-          id: data.id,
-          employeeId,
-          status,
-          timestamp: new Date().toISOString()
-        });
-        toast.show();
-        form.reset();
-        submitBtn.disabled = true;
-      })
-      .catch((err) => alert('Could not record attendance\n' + err));
-  });
+    .catch(err => alert('Record failed\n' + err));
+});
 
-  // ─── delete record on button click ─────────────────
-  tableBody.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('delete-btn')) return;
+// ――― delete
+tableBody.addEventListener('click', (e) => {
+  if (!e.target.classList.contains('delete-btn')) return;
+  const tr = e.target.closest('tr'); const id = tr.dataset.id;
 
-    const tr = e.target.closest('tr');
-    const id = tr.dataset.id;
-
-    fetch(`http://127.0.0.1:5000/attendance/${id}`, { method: 'DELETE' })
-      .then((r) => {
-        if (r.ok) {
-          tr.remove();
-          // renumber rows so the # column stays sequential
-          recordCnt = 0;
-          [...tableBody.rows].reverse().forEach(
-            (row) => (row.firstElementChild.textContent = ++recordCnt)
-          );
-        } else {
-          alert('Delete failed');
-        }
-      })
-      .catch((err) => alert('Delete failed\n' + err));
-  });
-})();
+  fetch(`${API_ROOT}/attendance/${id}`, { method:'DELETE' })
+    .then(r => r.ok && tr.remove())
+    .then(() => { rowNo = 0; [...tableBody.rows].reverse()
+        .forEach(r => (r.firstElementChild.textContent = ++rowNo)); })
+    .catch(err => alert('Delete failed\n' + err));
+});
