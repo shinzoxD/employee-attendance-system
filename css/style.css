@@ -1,0 +1,97 @@
+/* ─── dark-theme tokens ─────────────────────────── */
+:root {
+  --gray-950: #0d0d0d;   /* page bg   */
+  --gray-900: #141414;   /* nav/footer*/
+  --gray-800: #202020;   /* cards     */
+  --gray-700: #2c2c2c;   /* table hover */
+  --gray-600: #3d3d3d;   /* table lines */
+  --gray-text: #e6e6e6;  /* main text */
+
+  --indigo:  #4f46e5;    /* accent */
+  --success: #22c55e;    /* Present */
+  --danger:  #ef4444;    /* Absent  */
+  --warning:#facc15;     /* Late    */
+}
+
+/* ─── base ─────────────────────────────────────── */
+html,body{
+  background:var(--gray-950);
+  color:var(--gray-text);
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.55;
+}
+h1,h2,h3,h4,h5{color:#fff;font-weight:600;}
+.text-indigo{color:var(--indigo)!important;}
+
+/* ─── button utility ───────────────────────────── */
+.btn-indigo{
+  --bs-btn-bg:var(--indigo);
+  --bs-btn-border-color:var(--indigo);
+  --bs-btn-color:#fff;
+  --bs-btn-hover-bg:#3b35c5;
+  --bs-btn-hover-border-color:#3b35c5;
+}
+
+/* ─── cards & controls ─────────────────────────── */
+.card{
+  background:var(--gray-800);
+  border:none;
+  border-radius:1rem;
+  box-shadow:0 2px 6px rgba(0,0,0,.45);
+}
+.form-control,
+.form-select{
+  background:var(--gray-700);
+  color:var(--gray-text);
+  border:1px solid var(--gray-700);
+}
+.form-control::placeholder{color:#a0a0a0;}
+.form-control:focus,
+.form-select:focus{
+  border-color:var(--indigo);
+  box-shadow:0 0 0 .15rem rgba(79,70,229,.45);
+}
+
+/* ─── table dark fix ───────────────────────────── */
+.table{
+  --bs-table-bg:var(--gray-800);
+  --bs-table-color:var(--gray-text);
+  --bs-table-border-color:var(--gray-600);
+}
+.table thead th{
+  color:#fff;
+  border-bottom:1px solid var(--gray-600);
+}
+.table tbody th,
+.table tbody td{
+  color:var(--gray-text)!important;
+}
+.table tbody tr+tr{border-top:1px solid var(--gray-600);}
+.table tbody tr:hover{background:var(--gray-700);}
+
+/* status badges */
+.badge.bg-success{background:var(--success);}
+.badge.bg-danger {background:var(--danger);}
+.badge.bg-warning{background:var(--warning);color:#000;}
+
+/* delete button fades in */
+.delete-btn{
+  opacity:0;
+  transition:opacity .15s ease;
+  line-height:1;
+  padding:.25rem .5rem;
+}
+tbody tr:hover .delete-btn{opacity:1;}
+
+/* toast */
+.toast{
+  background:var(--success);
+  color:#0f0f0f;
+  border:none;
+  font-size:.9rem;
+}
+
+/* navbar & footer */
+.navbar,footer{background:var(--gray-900)!important;}
+footer{color:#888;font-size:.8rem;border-top:1px solid var(--gray-800);}

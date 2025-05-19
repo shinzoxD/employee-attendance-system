@@ -1,0 +1,20 @@
+{
+  "name": "jda-attendance-backend",
+  "version": "1.0.0",
+  "description": "REST API for JDA Employee Attendance System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "You",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
